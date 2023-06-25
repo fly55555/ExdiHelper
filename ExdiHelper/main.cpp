@@ -49,7 +49,7 @@ CtxFree()
         Ctx.DebugSystemObjects->Release();
 }
 
-HRESULT
+HRESULT 
 CtxInit()
 {
     HRESULT Result = S_OK;
@@ -302,8 +302,8 @@ EXPORT
 HRESULT
 WDBGAPI
 rox(
-    _In_ PDEBUG_CLIENT Client,
-    _In_ PCSTR Args
+	_In_ PDEBUG_CLIENT Client,
+	_In_ PCSTR Args
 )
 {
     HRESULT Result = S_OK;
@@ -360,5 +360,5 @@ rox(
     {
         dprintf("Failed to IG_GET_KERNEL_VERSION \n");
     }
-    return Result;
+	return Result;
 }
