@@ -297,6 +297,57 @@ VOID SearchDbgPteBase(
         dprintf("DbgPteBasePtr to search for g_Target \n");
 }
 
+EXPORT
+HRESULT
+WDBGAPI
+roy(
+    _In_ PDEBUG_CLIENT Client,
+    _In_ PCSTR Args
+)
+{
+#define IS_VALID_DOS_HEADER(dh) (dh->e_magic == IMAGE_DOS_SIGNATURE && (dh->e_lfanew != 0) && (dh->e_lfanew < 0x10000000) && (dh->e_lfanew%16 == 0))
+
+	ULONG IsOK = 0;
+	ULONG Index = 0;
+	ULONG Rdbyte = 0;
+	WORD IdtEntry[8] = { 0 };
+    HRESULT Result = S_OK;
+    DEBUG_VALUE Value = {0};
+    Result = Ctx.DebugRegisters->GetIndexByName("idtr", &Index);
+    if (Result == S_OK)
+    {
+        Result = Ctx.DebugRegisters->GetValue(Index, &Value);
+        if (Result == S_OK)
+        {
+            ReadMemory(Value.I64, IdtEntry, 16, &Rdbyte);
+
+			DWORD64 kiDivide = ((DWORD64)IdtEntry[5] << 48) + ((DWORD64)IdtEntry[4] << 32) + ((DWORD64)IdtEntry[3] << 16) + (DWORD64)IdtEntry[0];
+			DWORD64 searchBased = kiDivide & 0xFFFFFFFFFFFF0000;
+			IMAGE_DOS_HEADER Header = { 0 };
+
+			for (DWORD64 i = searchBased; i > 0xFFFFF80000000000; i -= 0x10000)
+			{
+				ReadMemory(i, &Header, sizeof(Header), &Rdbyte);
+                if (Header.e_magic == IMAGE_DOS_SIGNATURE &&
+                    Header.e_cblp == 0x0090 &&
+                    Header.e_cp == 0x0003 &&
+                    Header.e_cparhdr == 0x0004 &&
+                    Header.e_maxalloc == 0xFFFF &&
+                    Header.e_sp == 0x00B8 &&
+                    Header.e_lfarlc == 0x0040 &&
+                    Header.e_lfanew)
+                {
+                    dprintf(".......................... \n");
+                    dprintf(".......................... \n");
+                    dprintf("Found a valid DOS header. \n");
+                    dprintf("Maybe it's NtBase. [%p]\n", i);
+					break;
+				}
+			}
+		}
+	}
+    return Result;
+}
 
 EXPORT
 HRESULT
@@ -306,6 +357,9 @@ rox(
 	_In_ PCSTR Args
 )
 {
+    dprintf(".......................... \n");
+    dprintf(".......................... \n");
+
     HRESULT Result = S_OK;
     DBGKD_GET_VERSION64 SystemVersion = { 0 };
     if (Ioctl(IG_GET_KERNEL_VERSION, &SystemVersion, sizeof(SystemVersion)))
@@ -338,27 +392,44 @@ rox(
             DecodeDebuggerBlockData(BlockData, BlockSize);
             dprintf("Target KdDebuggerData Decode successful \n");
             dprintf("Target KernBase is [%p] \n", BlockData->KernBase);
-
-            memcpy(DbgEngKdDebuggerDataPtr, BlockData, BlockSize);
-
-            if (SystemVersion.MinorVersion >= 10240)// && kdext.version >=10240
+            if (BlockData->KernBase > 0xFFFF800000000000)
             {
-                dprintf("Target system version is Windows10 or later. \n");
-                dprintf("It maybe need to patch kdexts.pte=>DbgPteBase. \n");
+                memcpy(DbgEngKdDebuggerDataPtr, BlockData, BlockSize);
+                Result = Ctx.DebugControl->Execute(DEBUG_OUTCTL_IGNORE, ".reload", DEBUG_EXECUTE_NOT_LOGGED);
 
-                PVOID DbgPteBasePtr = NULL;
-                SearchDbgPteBase(&DbgPteBasePtr);
-                if (DbgPteBasePtr)
-                    *(unsigned __int64*)DbgPteBasePtr = BlockData->PteBase;
+                if (SystemVersion.MinorVersion >= 10240)// && kdext.version >=10240
+                {
+
+                    dprintf("-------------------------------------------------------- \n");
+
+                    dprintf("Target system version is Windows10 or later. \n");
+                    dprintf("It maybe need to patch kdexts.pte=>DbgPteBase. \n");
+
+                    PVOID DbgPteBasePtr = NULL;
+                    SearchDbgPteBase(&DbgPteBasePtr);
+                    if (DbgPteBasePtr)
+                    {
+                        Result = Ctx.DebugControl->Execute(DEBUG_OUTCTL_IGNORE, "!pte ffff800000000000", DEBUG_EXECUTE_NOT_LOGGED);
+                        dprintf("Invalid  PteBase is [%p] \n", *(unsigned __int64*)DbgPteBasePtr);
+                        dprintf("Replaced PteBase is [%p] \n", BlockData->PteBase);
+                        *(unsigned __int64*)DbgPteBasePtr = BlockData->PteBase;
+
+                        //Result = Ctx.DebugControl->Execute(DEBUG_OUTCTL_IGNORE, ".reload", DEBUG_EXECUTE_ECHO);
+                    }
+                }
             }
-
+            else
+            {
+                dprintf("Failed to DecodeDebuggerBlockData \n");
+            }
             free(BlockData);
-            //Result = Ctx.DebugControl->Execute(DEBUG_OUTCTL_IGNORE, ".reload", DEBUG_EXECUTE_NOT_LOGGED);
         }
     }
     else
     {
         dprintf("Failed to IG_GET_KERNEL_VERSION \n");
     }
+    dprintf(".......................... \n");
+    dprintf(".......................... \n");
 	return Result;
 }
