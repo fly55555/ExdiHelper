@@ -211,7 +211,7 @@ VOID SearchTargetKdDebuggerDataPtr(
             RB(i + 7) == 0x00 &&
             RB(i + 8) == 0x75)
         {
-            g_Target = i + (unsigned __int64)RD(i + 3) + 8;
+            g_Target = i + (int)RD(i + 3) + 8;
             break;
         }
 
@@ -220,7 +220,7 @@ VOID SearchTargetKdDebuggerDataPtr(
             RB(i + 7) == 0x75 &&
             (RB(i + 2) & 0x0D) == 0x0D)
         {
-            g_Target = i + (unsigned __int64)RD(i + 3) + 7;
+            g_Target = i + (int)RD(i + 3) + 7;
             break;
         }
     }
@@ -282,7 +282,7 @@ VOID SearchDbgPteBase(
                 if (RB(i) == 0x48 && RB(i + 1) == 0x83 && RB(i + 2) == 0xC4)
                 {
                     unsigned __int64 InstructionPosition = i - 7;
-                    PageTableInfoInitializedPtr = InstructionPosition + (unsigned __int64)RD(InstructionPosition + 2) + 7;
+                    PageTableInfoInitializedPtr = InstructionPosition + (int)RD(InstructionPosition + 2) + 7;
                     DbgPteBasePtr = PageTableInfoInitializedPtr + 0x20;
                     *KdDbgPteBasePtr = (PVOID)DbgPteBasePtr;
                     break;
