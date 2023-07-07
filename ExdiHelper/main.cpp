@@ -297,6 +297,8 @@ VOID SearchDbgPteBase(
         dprintf("DbgPteBasePtr to search for g_Target \n");
 }
 
+
+//Not used, for testing purposes only
 EXPORT
 HRESULT
 WDBGAPI
@@ -341,6 +343,7 @@ roy(
                     dprintf(".......................... \n");
                     dprintf("Found a valid DOS header. \n");
                     dprintf("Maybe it's NtBase. [%p]\n", i);
+
 					break;
 				}
 			}
@@ -349,6 +352,8 @@ roy(
     return Result;
 }
 
+
+//Fix decryption debuggerdata
 EXPORT
 HRESULT
 WDBGAPI
@@ -421,6 +426,11 @@ rox(
             else
             {
                 dprintf("Failed to DecodeDebuggerBlockData \n");
+                dprintf("Maybe the KdDebuggerDataBlock need not decode \n");
+                dprintf("Show the KdpDataBlockEncoded memory region: \n");
+                Ctx.DebugControl->Execute(DEBUG_OUTCTL_ALL_CLIENTS, "dq KdpDataBlockEncoded", DEBUG_EXECUTE_DEFAULT);
+
+                //dprintf("Please enter the command to view the value of KdpDataBlockEncoded \n");
             }
             free(BlockData);
         }
