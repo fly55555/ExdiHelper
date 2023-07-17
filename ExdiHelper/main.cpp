@@ -218,7 +218,7 @@ VOID SearchTargetKdDebuggerDataPtr(
         if (RB(i) == 0x48 &&
             RB(i + 1) == 0x39 &&
             RB(i + 7) == 0x75 &&
-            (RB(i + 2) & 0x0D) == 0x0D)
+            (RB(i + 2) & 0x0F) == 0x0D)
         {
             g_Target = i + (int)RD(i + 3) + 7;
             break;
