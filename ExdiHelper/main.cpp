@@ -169,10 +169,10 @@ DecodeDebuggerBlockData(
     unsigned __int64 EncodedChunks[128];    //Maybe in new version need large than 1024 byte
     unsigned __int64 DebuggerData[128];
 
-    Result = Ctx.DebugSymbols->GetOffsetByName("KiWaitNever", &KiWaitNeverPtr);
-    Result = Ctx.DebugSymbols->GetOffsetByName("KiWaitAlways", &KiWaitAlwaysPtr);
-    Result = Ctx.DebugSymbols->GetOffsetByName("KdpDataBlockEncoded", &KdpDataBlockEncodedPtr);
-    Result = Ctx.DebugSymbols->GetOffsetByName("KdDebuggerDataBlock", &KdDebuggerDataBlockPtr);
+    Result = Ctx.DebugSymbols->GetOffsetByName("nt!KiWaitNever", &KiWaitNeverPtr);
+    Result = Ctx.DebugSymbols->GetOffsetByName("nt!KiWaitAlways", &KiWaitAlwaysPtr);
+    Result = Ctx.DebugSymbols->GetOffsetByName("nt!KdpDataBlockEncoded", &KdpDataBlockEncodedPtr);
+    Result = Ctx.DebugSymbols->GetOffsetByName("nt!KdDebuggerDataBlock", &KdDebuggerDataBlockPtr);
 
     KdpDataBlockEncoded = KdpDataBlockEncodedPtr;
     IsOK = ReadMemory(KiWaitNeverPtr, &KiWaitNever, 8, &Rdbyte);
